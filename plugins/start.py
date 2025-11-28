@@ -36,21 +36,20 @@ async def send_verification_message(message, caption_text, verify_image, reply_m
                 photo=verify_image,
                 caption=caption_text,
                 reply_markup=reply_markup,
-                protect_content=False,
                 quote=True
             )
             return
         except Exception as e:
-            pass
+            print(f"[v0] Photo failed with: {e}. Retrying with text message...")
     
     try:
         await message.reply(
             text=caption_text,
             reply_markup=reply_markup,
-            protect_content=False,
             quote=True
         )
-    except:
+    except Exception as e:
+        print(f"[v0] Text message failed: {e}")
         pass
 
 
@@ -128,7 +127,7 @@ async def start_command(client: Client, message: Message):
                             caption_text = f"📊 HEY {user_first},\n‼ GET ALL FILES IN A SINGLE LINK ‼\n≛ YOUR LINK IS READY, KINDLY CLICK ON\nOPEN LINK BUTTON.."
                             await send_verification_message(message, caption_text, verify_image, InlineKeyboardMarkup(btn))
                         else:
-                            await message.reply(f"Your token is expired or not verified. Complete verification to access files.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_1)}\n\nError: Could not generate verification link. Please try again.", protect_content=False, quote=True)
+                            await message.reply(f"Your token is expired or not verified. Complete verification to access files.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_1)}\n\nError: Could not generate verification link. Please try again.", quote=True)
                         return
                     
                     elif access_type == 'require_step2':
@@ -151,7 +150,7 @@ async def start_command(client: Client, message: Message):
                             caption_text = f"📊 HEY {user_first},\n‼ GET ALL FILES IN A SINGLE LINK ‼\n≛ YOUR LINK IS READY, KINDLY CLICK ON\nOPEN LINK BUTTON.."
                             await send_verification_message(message, caption_text, verify_image, InlineKeyboardMarkup(btn))
                         else:
-                            await message.reply(f"Complete second verification to continue accessing files.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_2)}\n\nError: Could not generate verification link. Please try again.", protect_content=False, quote=True)
+                            await message.reply(f"Complete second verification to continue accessing files.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_2)}\n\nError: Could not generate verification link. Please try again.", quote=True)
                         return
                 
                 # User is verified or verification not required
