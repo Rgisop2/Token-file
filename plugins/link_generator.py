@@ -7,6 +7,8 @@ from config import ADMINS
 from helper_func import encode, get_message_id
 from database.database import db_save_link
 
+batch_user_states = {}
+
 @Bot.on_message(filters.private & filters.user(ADMINS) & filters.command('batch'))
 async def batch(client: Client, message: Message):
     while True:
@@ -33,38 +35,76 @@ async def batch(client: Client, message: Message):
             await second_message.reply("❌ Error\n\n𝐈𝐭𝐬 𝐧𝐨𝐭 𝐅𝐫𝐨𝐦 𝐃𝐚𝐭𝐚𝐛𝐚𝐬𝐞 𝐂𝐡𝐚𝐧𝐧𝐞𝐥 𝐃𝐮𝐝𝐞 𝐂𝐡𝐞𝐜𝐤 𝐀𝐠𝐚𝐢𝐧..!", quote = True)
             continue
 
+    file_id = f"get-{f_msg_id * abs(client.db_channel.id)}-{s_msg_id * abs(client.db_channel.id)}"
+    batch_user_states[message.from_user.id] = {
+        'f_msg_id': f_msg_id,
+        's_msg_id': s_msg_id,
+        'file_id': file_id,
+        'second_message': second_message,
+        'client': client
+    }
+    
     try:
         btn = [
-            [InlineKeyboardButton("YES", callback_data="batch_image_yes"), InlineKeyboardButton("NO", callback_data="batch_image_no")]
+            [InlineKeyboardButton("YES", callback_data="batch_image_yes"), 
+             InlineKeyboardButton("NO", callback_data="batch_image_no")]
         ]
-        image_choice = await client.ask(
-            text="Do you want a custom verification image for this batch?\n\nReply: YES or NO",
+        await client.send_message(
             chat_id=message.from_user.id,
-            filters=filters.text,
-            timeout=60,
+            text="Do you want a custom verification image for this batch?\n\nReply: YES or NO",
             reply_markup=InlineKeyboardMarkup(btn)
         )
-        batch_image = ""
-        if image_choice.text.upper() in ["YES", "Y"]:
-            try:
-                image_msg = await client.ask(
-                    text="Send the verification image URL:",
-                    chat_id=message.from_user.id,
-                    filters=filters.text,
-                    timeout=60
-                )
-                batch_image = image_msg.text.strip()
-            except:
-                batch_image = ""
+    except:
+        await proceed_batch_link(client, file_id, second_message, "")
+
+
+@Bot.on_callback_query(filters.regex("^batch_image_yes$"))
+async def batch_yes_handler(client: Client, callback):
+    user_id = callback.from_user.id
+    
+    if user_id not in batch_user_states:
+        await callback.answer("Session expired. Please use /batch again.", show_alert=True)
+        return
+    
+    await callback.answer()
+    
+    try:
+        # Ask for image URL
+        image_msg = await client.ask(
+            text="Send the verification image URL:",
+            chat_id=user_id,
+            filters=filters.text,
+            timeout=60
+        )
+        batch_image = image_msg.text.strip()
     except:
         batch_image = ""
+    
+    state = batch_user_states.pop(user_id)
+    await proceed_batch_link(client, state['file_id'], state['second_message'], batch_image)
 
-    string = f"get-{f_msg_id * abs(client.db_channel.id)}-{s_msg_id * abs(client.db_channel.id)}"
+
+@Bot.on_callback_query(filters.regex("^batch_image_no$"))
+async def batch_no_handler(client: Client, callback):
+    user_id = callback.from_user.id
+    
+    if user_id not in batch_user_states:
+        await callback.answer("Session expired. Please use /batch again.", show_alert=True)
+        return
+    
+    await callback.answer()
+    
+    state = batch_user_states.pop(user_id)
+    await proceed_batch_link(client, state['file_id'], state['second_message'], "")
+
+
+async def proceed_batch_link(client, file_id, second_message, batch_image):
+    """Common function to generate and send batch link"""
+    string = file_id
     base64_string = await encode(string)
     link = f"https://telegram.me/{client.username}?start={base64_string}"
     
     if batch_image:
-        file_id = f"get-{f_msg_id * abs(client.db_channel.id)}-{s_msg_id * abs(client.db_channel.id)}"
         await db_save_link(file_id, batch_image=batch_image)
     
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔁 Share URL", url=f'https://telegram.me/share/url?url={link}')]])
