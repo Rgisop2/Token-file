@@ -58,10 +58,21 @@ async def send_verification_message(message, caption_text, verify_image, reply_m
                 quote=True
             )
         except:
-            # If image fails, send text only
-            await message.reply(caption_text, reply_markup=reply_markup, protect_content=False, quote=True)
+            # Fallback to text-only if photo fails
+            await message.reply(
+                text=caption_text,
+                reply_markup=reply_markup,
+                protect_content=False,
+                quote=True
+            )
     else:
-        await message.reply(caption_text, reply_markup=reply_markup, protect_content=False, quote=True)
+        # If no image available, still send as message
+        await message.reply(
+            text=caption_text,
+            reply_markup=reply_markup,
+            protect_content=False,
+            quote=True
+        )
 
 
 @Bot.on_message(filters.command('start') & filters.private & subscribed)
@@ -199,14 +210,17 @@ async def start_command(client: Client, message: Message):
                     
                     if link and isinstance(link, str) and link.startswith(('http://', 'https://', 'tg://')):
                         btn = [
-                            [InlineKeyboardButton("Click here", url=link)],
+                            [
+                                InlineKeyboardButton("• OPEN LINK ➜", url=link),
+                                InlineKeyboardButton("TUTORIAL ➜", url=TUT_VID) if TUT_VID and isinstance(TUT_VID, str) and TUT_VID.startswith(('http://', 'https://', 'tg://')) else None
+                            ]
                         ]
-                        if TUT_VID and isinstance(TUT_VID, str) and TUT_VID.startswith(('http://', 'https://', 'tg://')):
-                            btn.append([InlineKeyboardButton('How to use the bot', url=TUT_VID)])
+                        btn = [[b for b in row if b is not None] for row in btn]
                         
                         file_id = verify_status.get('link', '')
                         verify_image = await get_verify_image(file_id)
-                        caption_text = f"Your token is expired or not verified. Complete verification to access files.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_1)}"
+                        user_first = message.from_user.first_name if message.from_user else "User"
+                        caption_text = f"📊 HEY {user_first},\n‼ GET ALL FILES IN A SINGLE LINK ‼\n≛ YOUR LINK IS READY, KINDLY CLICK ON\nOPEN LINK BUTTON.."
                         await send_verification_message(message, caption_text, verify_image, InlineKeyboardMarkup(btn))
                     else:
                         await message.reply(f"Your token is expired or not verified. Complete verification to access files.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_1)}\n\nError: Could not generate verification link. Please try again.", protect_content=False, quote=True)
@@ -219,14 +233,17 @@ async def start_command(client: Client, message: Message):
                     
                     if link and isinstance(link, str) and link.startswith(('http://', 'https://', 'tg://')):
                         btn = [
-                            [InlineKeyboardButton("Click here", url=link)],
+                            [
+                                InlineKeyboardButton("• OPEN LINK ➜", url=link),
+                                InlineKeyboardButton("TUTORIAL ➜", url=TUT_VID) if TUT_VID and isinstance(TUT_VID, str) and TUT_VID.startswith(('http://', 'https://', 'tg://')) else None
+                            ]
                         ]
-                        if TUT_VID and isinstance(TUT_VID, str) and TUT_VID.startswith(('http://', 'https://', 'tg://')):
-                            btn.append([InlineKeyboardButton('How to use the bot', url=TUT_VID)])
+                        btn = [[b for b in row if b is not None] for row in btn]
                         
                         file_id = verify_status.get('link', '')
                         verify_image = await get_batch_verify_image(file_id)
-                        caption_text = f"Complete second verification to continue accessing files.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_2)}"
+                        user_first = message.from_user.first_name if message.from_user else "User"
+                        caption_text = f"📊 HEY {user_first},\n‼ GET ALL FILES IN A SINGLE LINK ‼\n≛ YOUR LINK IS READY, KINDLY CLICK ON\nOPEN LINK BUTTON.."
                         await send_verification_message(message, caption_text, verify_image, InlineKeyboardMarkup(btn))
                     else:
                         await message.reply(f"Complete second verification to continue accessing files.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_2)}\n\nError: Could not generate verification link. Please try again.", protect_content=False, quote=True)
@@ -336,14 +353,17 @@ async def start_command(client: Client, message: Message):
                 
                 if link and isinstance(link, str) and link.startswith(('http://', 'https://', 'tg://')):
                     btn = [
-                        [InlineKeyboardButton("Click here", url=link)],
+                        [
+                            InlineKeyboardButton("• OPEN LINK ➜", url=link),
+                            InlineKeyboardButton("TUTORIAL ➜", url=TUT_VID) if TUT_VID and isinstance(TUT_VID, str) and TUT_VID.startswith(('http://', 'https://', 'tg://')) else None
+                        ]
                     ]
-                    if TUT_VID and isinstance(TUT_VID, str) and TUT_VID.startswith(('http://', 'https://', 'tg://')):
-                        btn.append([InlineKeyboardButton('How to use the bot', url=TUT_VID)])
+                    btn = [[b for b in row if b is not None] for row in btn]
                     
                     file_id = verify_status.get('link', '')
                     verify_image = await get_batch_verify_image(file_id)
-                    caption_text = f"Your Ads token is expired, refresh your token and try again.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_1)}\n\nWhat is the token?\n\nThis is an ads token. If you pass 1 ad, you can use the bot for {get_exp_time(VERIFY_EXPIRE_1)} after passing the ad."
+                    user_first = message.from_user.first_name if message.from_user else "User"
+                    caption_text = f"📊 HEY {user_first},\n‼ GET ALL FILES IN A SINGLE LINK ‼\n≛ YOUR LINK IS READY, KINDLY CLICK ON\nOPEN LINK BUTTON.."
                     await send_verification_message(message, caption_text, verify_image, InlineKeyboardMarkup(btn))
                 else:
                     await message.reply(f"Your Ads token is expired, refresh your token and try again.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_1)}\n\nWhat is the token?\n\nThis is an ads token. If you pass 1 ad, you can use the bot for {get_exp_time(VERIFY_EXPIRE_1)} after passing the ad.\n\nError: Could not generate verification link. Please try again.", protect_content=False, quote=True)
