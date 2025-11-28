@@ -34,11 +34,15 @@ async def batch(client: Client, message: Message):
             continue
 
     try:
+        btn = [
+            [InlineKeyboardButton("YES", callback_data="batch_image_yes"), InlineKeyboardButton("NO", callback_data="batch_image_no")]
+        ]
         image_choice = await client.ask(
             text="Do you want a custom verification image for this batch?\n\nReply: YES or NO",
             chat_id=message.from_user.id,
             filters=filters.text,
-            timeout=60
+            timeout=60,
+            reply_markup=InlineKeyboardMarkup(btn)
         )
         batch_image = ""
         if image_choice.text.upper() in ["YES", "Y"]:
@@ -60,7 +64,7 @@ async def batch(client: Client, message: Message):
     link = f"https://telegram.me/{client.username}?start={base64_string}"
     
     if batch_image:
-        file_id = f"batch-{f_msg_id}-{s_msg_id}"
+        file_id = f"get-{f_msg_id * abs(client.db_channel.id)}-{s_msg_id * abs(client.db_channel.id)}"
         await db_save_link(file_id, batch_image=batch_image)
     
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔁 Share URL", url=f'https://telegram.me/share/url?url={link}')]])
@@ -98,7 +102,8 @@ async def link_generator(client: Client, message: Message):
     link = f"https://telegram.me/{client.username}?start={base64_string}"
     
     if custom_image:
-        await db_save_link(f"get-{msg_id}", image=custom_image)
+        file_id = f"get-{msg_id * abs(client.db_channel.id)}"
+        await db_save_link(file_id, image=custom_image)
     
     reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("🔁 Share URL", url=f'https://telegram.me/share/url?url={link}')]])
     await channel_message.reply_text(f"<b>Here is your link</b>\n\n{link}", quote=True, reply_markup=reply_markup)
