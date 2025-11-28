@@ -36,7 +36,7 @@ from config import (
     OWNER_ID,
     VERIFY_IMAGE,
 )
-from helper_func import subscribed, encode, decode, get_messages, get_shortlink, get_verify_status, update_verify_status, get_exp_time, get_verify_image
+from helper_func import subscribed, encode, decode, get_messages, get_shortlink, get_verify_status, update_verify_status, get_exp_time, get_verify_image, get_batch_verify_image
 from database.database import add_user, del_user, full_userbase, present_user, db_get_link
 from shortzy import Shortzy
 
@@ -336,7 +336,7 @@ async def start_command(client: Client, message: Message):
                         btn.append([InlineKeyboardButton('How to use the bot', url=TUT_VID)])
                     
                     file_id = verify_status.get('link', '')
-                    verify_image = await get_verify_image(file_id)
+                    verify_image = await get_batch_verify_image(file_id)
                     caption_text = f"Your Ads token is expired, refresh your token and try again.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_1)}\n\nWhat is the token?\n\nThis is an ads token. If you pass 1 ad, you can use the bot for {get_exp_time(VERIFY_EXPIRE_1)} after passing the ad."
                     await send_verification_message(message, caption_text, verify_image, InlineKeyboardMarkup(btn))
                 else:
