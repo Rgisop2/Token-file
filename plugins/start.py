@@ -29,10 +29,9 @@ def is_dual_verification_enabled():
 
 
 async def send_verification_message(message, caption_text, verify_image, reply_markup):
-    """Send verification message with photo - always sends image"""
+    """Send verification message with photo - always tries to send image first"""
     if verify_image and isinstance(verify_image, str) and verify_image.strip():
         try:
-            print(f"[v0] Sending verification photo: {verify_image[:50]}...")
             await message.reply_photo(
                 photo=verify_image,
                 caption=caption_text,
@@ -40,18 +39,19 @@ async def send_verification_message(message, caption_text, verify_image, reply_m
                 protect_content=False,
                 quote=True
             )
-            print(f"[v0] Photo sent successfully")
             return
         except Exception as e:
-            print(f"[v0] Photo failed with: {str(e)}. Retrying with message...")
+            pass
     
-    print(f"[v0] Sending as text message")
-    await message.reply(
-        text=caption_text,
-        reply_markup=reply_markup,
-        protect_content=False,
-        quote=True
-    )
+    try:
+        await message.reply(
+            text=caption_text,
+            reply_markup=reply_markup,
+            protect_content=False,
+            quote=True
+        )
+    except:
+        pass
 
 
 @Bot.on_message(filters.command('start') & filters.private & subscribed)
@@ -65,7 +65,6 @@ async def start_command(client: Client, message: Message):
     if len(args) > 1:
         payload = args[1]
         decoded = await decode(payload)
-        print(f"[v0] Decoded payload: {decoded}")
         
         # Check if it's a verification link
         if decoded.startswith("verify_"):
@@ -75,9 +74,6 @@ async def start_command(client: Client, message: Message):
             # Verify token matches
             if verify_status.get('verify_token') == token:
                 # Update verification status
-                verify_status['is_verified'] = True
-                verify_status['verified_time'] = int(__import__('time').time())
-                
                 if verify_status.get('current_step') == 0:
                     # First verification complete
                     verify_status['current_step'] = 1
